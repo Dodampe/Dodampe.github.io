@@ -2,19 +2,58 @@
 // AKA -- Anonymous Self-Executing Function
 (function()
 {
+    /**
+     * This function uses AJAX to open a connection to the server and returns 
+     * the data payload to the callback function
+     *
+     * @param {string} method
+     * @param {string} url
+     * @param {function} callback
+     */
+    function AjaxRequest(method, url, callback)
+    {
+        // AJAX STEPS
+        // Step 1. - instantiate an XHR Object
+        let XHR = new XMLHttpRequest();
+
+        // Step 2. - add an event listener for readystatechange
+        XHR.addEventListener("readystatechange", () =>
+        {
+            if(XHR.readyState === 4 && XHR.status === 200)
+            {
+                if(typeof callback === "function")
+                {
+                    callback(XHR.responseText);
+                }
+                else
+                {
+                    console.error("ERROR: callback not a function");
+                }
+            }
+        });
+
+        // Step 3. - Open a connection to the server
+        XHR.open(method, url);
+
+        // Step 4. - Send the request to the server
+        XHR.send();
+    }
+
+    /**
+     * This function loads the header.html content into a page
+     *
+     * @param {string} html_data
+     */
+    function LoadHeader(html_data)
+    {
+        $("header").html(html_data);
+        $(`li>a:contains(${document.title})`).addClass("active"); // update active link
+        checkLogin();
+    }
+
     function DisplayHomePage()
     {
         console.log("Home Page");
-        
-
-        // let AboutUsButton = document.getElementById("AboutUsButton");
-        // AboutUsButton.addEventListener("click", function()
-        // {
-        //     location.href = "about.html";
-        // });
-
-        // 1) Fattest Memory Footprint
-        // jQuery way
         $("#AboutUsButton").on("click", () => 
         {
             location.href = "about.html";
@@ -24,7 +63,6 @@
         $("body").append(`<article class="container">
         <p id="ArticleParagraph" class ="mt-3">This is the Article Paragraph</p>
         </article>`);
-
     }
 
     function DisplayProductsPage()
@@ -61,20 +99,20 @@
     }
 
     /**
-     * This method validates the field in the form and diaplys an error in the message area div element
-     * 
-     * @param {String} fieldID 
-     * @param {RegExp} regular_expression 
-     * @param {String} error_message 
+     * This method validates a field in the form and displays an error in the message area div element
+     *
+     * @param {string} fieldID
+     * @param {RegExp} regular_expression
+     * @param {string} error_message
      */
     function ValidateField(fieldID, regular_expression, error_message)
     {
         let messageArea = $("#messageArea").hide();
-
+    
         $("#" + fieldID).on("blur", function()
         {
-            let text_Value = $(this).val();
-            if(!regular_expression.test(text_Value))
+            let text_value = $(this).val();
+            if(!regular_expression.test(text_value))
             {
                 $(this).trigger("focus").trigger("select");
                 messageArea.addClass("alert alert-danger").text(error_message).show();
@@ -86,19 +124,20 @@
         });
     }
 
-    function ContactFormFunction()
+    function ContactFormValidation()
     {
-        ValidateField("fullName", /^([A-Z][a-z]{1,3}.?\s)?([A-Z][a-z]{1,})((\s|,|-)([A-Z][a-z]{1,}))*(\s|,|-)([A-Z][a-z]{1,})$/, "Please enter a valid full name.");
-        ValidateField("contactNumber", /^(\+\d{1,3}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/, "Please enter a valid Contact Number. Example : (416) 222-3333");
+        ValidateField("fullName", /^([A-Z][a-z]{1,3}.?\s)?([A-Z][a-z]{1,})((\s|,|-)([A-Z][a-z]{1,}))*(\s|,|-)([A-Z][a-z]{1,})$/, "Please enter a valid Full Name. This must include at least a Capitalized First Name and a Capitalized Last Name.");
+        ValidateField("contactNumber", /^(\+\d{1,3}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/, "Please enter a valid Contact Number. Example: (416) 555-5555");
         ValidateField("emailAddress", /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/, "Please enter a valid Email Address.");
     }
+
 
     function DisplayContactPage()
     {
         console.log("Contact Page");
 
-        ContactFormFunction();
-
+        ContactFormValidation();
+       
         let sendButton = document.getElementById("sendButton");
         let subscribeCheckbox = document.getElementById("subscribeCheckbox");
 
@@ -180,7 +219,7 @@
     {
         console.log("Edit Page");
 
-        ContactFormFunction();
+        ContactFormValidation();
 
         let page = location.hash.substring(1);
 
@@ -244,6 +283,82 @@
     function displayLoginPage()
     {
         console.log("Login Page");
+        let messageArea =  $("#messageArea");
+        messageArea.hide();
+
+        $("#loginButton").on("click", function()
+        {
+            let success = false;
+            // create an empty user object
+            let newUser = new core.User();
+
+            // uses jQuery shortcut to load the users.json file
+            $.get("./Data/users.json", function(data)
+            {
+                // for every user in the users.json file
+                for (const user of data.users) 
+                {
+                    // check if the username and password entered in the form matches this user
+                    if(username.value == user.Username && password.value == user.Password)
+                    {
+                        // get the user data from the file and assign to our empty user object
+                        newUser.fromJSON(user);
+                        success = true;
+                        break;
+                    }
+                }
+
+                 // if username and password matches - success.. the perform the login sequence
+                if(success)
+                {
+                    // add user to session storage
+                    sessionStorage.setItem("user", newUser.serialize());
+
+                    // hide any error message
+                    messageArea.removeAttr("class").hide();
+
+                    // redirect the user to the secure area of our site - contact-list.html
+                    location.href = "contact-list.html";
+                }
+                // else if bad credentials were entered...
+                else
+                {
+                    // display an error message
+                    $("#username").trigger("focus").trigger("select");
+                    messageArea.addClass("alert alert-danger").text("Error: Invalid Login Information").show();
+                }
+            });
+        });
+
+        $("#cancelButton").on("click", function()
+        {
+            // clear the login form
+            document.forms[0].reset();
+
+            // return to the home page
+            location.href = "index.html";
+        });
+    }
+
+    function checkLogin()
+    {
+        // if user is logged in
+        if(sessionStorage.getItem("user"))
+        {
+            // swap out the login link for logout
+            $("#login").html(
+                `<a id="logout" class="nav-link" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>`
+            );
+            
+            $("#logout").on("click", function()
+            {
+                // perform logout
+                sessionStorage.clear();
+
+                // redirect back to login
+                location.href = "login.html";
+            });
+        }
     }
 
     function displayRegisterPage()
@@ -251,42 +366,42 @@
         console.log("Register Page");
     }
 
-
     // named function option
     function Start()
     {
         console.log("App Started!");
 
-        switch(document.title)
-        {
-            case "Home":
-                DisplayHomePage();
-                break;
-            case "Our Products":
-                DisplayProductsPage();
-                break;
-            case "Our Services":
-                DisplayServicesPage();
-                break;
-            case "About Us":
-                DisplayAboutPage();
-                break;
-            case "Contact Us":
-                DisplayContactPage();
-                break;
-            case "Contact-List":
-                DisplayContactListPage();
-                break;
-                //new
-            case "Edit":
-                displayEditPage();
-                break;
-            case "Login":
-                displayLoginPage();
-                break;
-            case "Register":
-                displayRegisterPage();
-                break;
+        AjaxRequest("GET", "header.html", LoadHeader);
+
+        switch (document.title) {
+          case "Home":
+            DisplayHomePage();
+            break;
+          case "Our Products":
+            DisplayProductsPage();
+            break;
+          case "Our Services":
+            DisplayServicesPage();
+            break;
+          case "About Us":
+            DisplayAboutPage();
+            break;
+          case "Contact Us":
+            DisplayContactPage();
+            break;
+          case "Contact-List":
+            DisplayContactListPage();
+            break;
+          //new
+          case "Edit":
+            displayEditPage();
+            break;
+          case "Login":
+            displayLoginPage();
+            break;
+          case "Register":
+            displayRegisterPage();
+            break;
         }
        
     }
