@@ -44,11 +44,46 @@
      *
      * @param {string} html_data
      */
-    function LoadHeader(html_data)
+    function LoadHeader()
     {
-        $("header").html(html_data);
-        $(`li>a:contains(${document.title})`).addClass("active"); // update active link
-        checkLogin();
+        // use AJAX to load header content
+        $.get(`/Views/compoenets/header.html`, function(html_date)
+        {
+            // inject Header contect into the page
+            $("header").html(html_date);
+
+            document.title = router.ActiveLink.substring(0, 1).toUpperCase() + router.ActiveLink.substring(1);
+
+            $(`li>a:contains(${document.title})`).addClass("active"); // update active link
+            
+            CheckLogin();
+        });
+    }
+
+    /**
+     * 
+     * @returns {void}
+     */
+    function LoadContent()
+    {
+        let page_name = router.ActiveLink;
+        let callback = ActiveLinkCallBack();
+        $.get(`./Views/content/${page_name}.html`, function(html_date)
+        {
+            $("main").html(html_date);
+            callback();
+        });
+    }
+
+    /**
+     * @returns {void}
+     */
+    function LoadFooter()
+    {
+        $.get(`./Views/compoenets/footer.html`, function(html_date)
+        {
+            $("footer").html(html_date);
+        });
     }
 
     function DisplayHomePage()
@@ -56,7 +91,7 @@
         console.log("Home Page");
         $("#AboutUsButton").on("click", () => 
         {
-            location.href = "about.html";
+            location.href = "/about";
         });
     
         $("main").append(`<p id="MainParagraph" class="mt-3">This is the Main Paragraph</p>`);
@@ -191,25 +226,25 @@
 
             contactList.innerHTML = data;
 
-            $("#addButton").on("click", ()=>
-            {
-                location.href = "edit.html#add";
-            });
-
             $("button.delete").on("click", function()
             {
                 if(confirm("Are you sure?"))
                 {
                     localStorage.removeItem($(this).val())
                 }
-                location.href = "contact-list.html";
+                location.href = "/contact-list";
             });
 
             $("button.edit").on("click", function()
             {
-                location.href = "edit.html#" + $(this).val();
+                location.href = "/edit" + $(this).val();
             });
         }
+
+        $("#addButton").on("click", ()=>
+        {
+            location.href = "/edit#add";
+        });
     }
 
     /**
@@ -336,11 +371,11 @@
             document.forms[0].reset();
 
             // return to the home page
-            location.href = "index.html";
+            location.href = "home";
         });
     }
 
-    function checkLogin()
+    function CheckLogin()
     {
         // if user is logged in
         if(sessionStorage.getItem("user"))
@@ -366,43 +401,46 @@
         console.log("Register Page");
     }
 
+    function Display404page()
+    {
+
+    }
+
+    /**
+     * @param {String} activeLink 
+     * @returns {function}
+     */
+    function ActiveLinkCallBack()
+    {
+        switch(router.ActiveLink)
+        {
+            case "home": return DisplayHomePage;
+            case "about" : return DisplayAboutPage;
+            case "products" : return DisplayProductsPage;
+            case "services" : return DisplayServicesPage;
+            case "contact" : return DisplayContactPage;
+            case "contact-list" : return DisplayContactListPage;
+            case "edit" : return displayEditPage;
+            case "login" : return displayLoginPage;
+            case "register" : return displayRegisterPage;
+            case "404" : return Display404page;;
+            default:
+                console.error("ERROR: call back does not exits: " + activeLink);
+                break;
+        }
+    }
+
     // named function option
     function Start()
     {
         console.log("App Started!");
 
-        AjaxRequest("GET", "header.html", LoadHeader);
+        LoadHeader();
+        //AjaxRequest("GET", "./Views/compoenets/header.html", LoadHeader);
 
-        switch (document.title) {
-          case "Home":
-            DisplayHomePage();
-            break;
-          case "Our Products":
-            DisplayProductsPage();
-            break;
-          case "Our Services":
-            DisplayServicesPage();
-            break;
-          case "About Us":
-            DisplayAboutPage();
-            break;
-          case "Contact Us":
-            DisplayContactPage();
-            break;
-          case "Contact-List":
-            DisplayContactListPage();
-            break;
-          //new
-          case "Edit":
-            displayEditPage();
-            break;
-          case "Login":
-            displayLoginPage();
-            break;
-          case "Register":
-            displayRegisterPage();
-            break;
-        }
+        LoadContent();
+
+        LoadFooter();
        
     }
 
