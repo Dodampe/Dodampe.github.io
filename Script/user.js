@@ -13,6 +13,28 @@
             this.m_displayName = name;
         }
 
+        get DisplayFirstName()
+        {
+            return this.m_displayFirstName;
+        }
+        
+        set DisplayFirstName(Fname)
+        {
+            this.m_displayFirstName = Fname;
+        }
+
+        get DisplayLastName()
+        {
+            return this.m_displayLastName;
+        }
+        
+        set DisplayLastName(Lname)
+        {
+            this.m_displayLastName = Lname;
+        }
+
+        
+
         get EmailAddress()
         {
             return this.m_emailAddress;
@@ -75,12 +97,39 @@
             this.Username = data.Username;
             this.Password = data.Password;
         }
+        
 
+        userName()
+        {
+            return `${this.Username}`;
+        }
+        
         serialize()
         {
             if(this.DisplayName !== "" && this.EmailAddress !== "" && this.Username !== "")
             {
                 return `${this.DisplayName},${this.EmailAddress},${this.Username}`;
+            }
+            else
+            {
+                console.error("One or more properties of the User is empty");
+                return null;
+            }
+        }
+
+        SetRegistra(first, last, email, password)
+        {
+            this.DisplayFirstName = first;
+            this.DisplayLastName= last;
+            this.EmailAddress = email;
+            this.Password = password;
+        }
+
+        displayregister()
+        {
+            if(this.DisplayFirstName !== "" && this.DisplayLastName !== "" && this.EmailAddress !== "" && this.password !== "")
+            {
+                return `${this.DisplayFirstName},${this.DisplayFirstName},${this.EmailAddress},${this.password}`;
             }
             else
             {

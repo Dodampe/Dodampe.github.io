@@ -1,5 +1,7 @@
-// IIFE -- Immediately Invoked Function Expression
-// AKA -- Anonymous Self-Executing Function
+// Name             : Devin Dodampe
+// StudentID        : 100798520
+// Date Completed   : February 27, 2022
+
 (function()
 {
     /**
@@ -44,46 +46,11 @@
      *
      * @param {string} html_data
      */
-    function LoadHeader()
+    function LoadHeader(html_data)
     {
-        // use AJAX to load header content
-        $.get(`/Views/compoenets/header.html`, function(html_date)
-        {
-            // inject Header contect into the page
-            $("header").html(html_date);
-
-            document.title = router.ActiveLink.substring(0, 1).toUpperCase() + router.ActiveLink.substring(1);
-
-            $(`li>a:contains(${document.title})`).addClass("active"); // update active link
-            
-            CheckLogin();
-        });
-    }
-
-    /**
-     * 
-     * @returns {void}
-     */
-    function LoadContent()
-    {
-        let page_name = router.ActiveLink;
-        let callback = ActiveLinkCallBack();
-        $.get(`./Views/content/${page_name}.html`, function(html_date)
-        {
-            $("main").html(html_date);
-            callback();
-        });
-    }
-
-    /**
-     * @returns {void}
-     */
-    function LoadFooter()
-    {
-        $.get(`./Views/compoenets/footer.html`, function(html_date)
-        {
-            $("footer").html(html_date);
-        });
+        $("header").html(html_data);
+        $(`li>a:contains(${document.title})`).addClass("active"); // update active link
+        checkLogin();
     }
 
     function DisplayHomePage()
@@ -91,7 +58,7 @@
         console.log("Home Page");
         $("#AboutUsButton").on("click", () => 
         {
-            location.href = "/about";
+            location.href = "about.html";
         });
     
         $("main").append(`<p id="MainParagraph" class="mt-3">This is the Main Paragraph</p>`);
@@ -99,17 +66,25 @@
         <p id="ArticleParagraph" class ="mt-3">This is the Article Paragraph</p>
         </article>`);
     }
-
+    /**
+     *  Display's product's page
+     */
     function DisplayProductsPage()
     {
         console.log("Products Page");
     }
 
+    /**
+     *  Displays Service Page
+     */
     function DisplayServicesPage()
     {
         console.log("Services Page");
     }
 
+    /**
+     *  Display's About Page
+     */
     function DisplayAboutPage()
     {
         console.log("About Page");
@@ -159,14 +134,20 @@
         });
     }
 
+    /**
+     * Validates information for the contact page
+     */
     function ContactFormValidation()
     {
-        ValidateField("fullName", /^([A-Z][a-z]{1,3}.?\s)?([A-Z][a-z]{1,})((\s|,|-)([A-Z][a-z]{1,}))*(\s|,|-)([A-Z][a-z]{1,})$/, "Please enter a valid Full Name. This must include at least a Capitalized First Name and a Capitalized Last Name.");
+        ValidateField("fullName", /([A-Z][a-z]{1,3}.?\s)?([A-Z][a-z]{1,})((\s|,|-)([A-Z][a-z]{1,}))*(\s|,|-)([A-Z][a-z]{1,})*/, "Please enter a valid Full Name. This must include at least a Capitalized First Name and a Capitalized Last Name.");
         ValidateField("contactNumber", /^(\+\d{1,3}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/, "Please enter a valid Contact Number. Example: (416) 555-5555");
         ValidateField("emailAddress", /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/, "Please enter a valid Email Address.");
     }
 
 
+    /**
+     *  Displays Contact Page
+     */
     function DisplayContactPage()
     {
         console.log("Contact Page");
@@ -176,6 +157,7 @@
         let sendButton = document.getElementById("sendButton");
         let subscribeCheckbox = document.getElementById("subscribeCheckbox");
 
+        // adds user to contact
         sendButton.addEventListener("click", function(event)
         {
 
@@ -192,6 +174,9 @@
         });
     }
 
+    /**
+     *  Displays Contact List Page
+     */
     function DisplayContactListPage()
     {
         if(localStorage.length > 0)
@@ -226,25 +211,25 @@
 
             contactList.innerHTML = data;
 
+            $("#addButton").on("click", ()=>
+            {
+                location.href = "edit.html#add";
+            });
+
             $("button.delete").on("click", function()
             {
                 if(confirm("Are you sure?"))
                 {
                     localStorage.removeItem($(this).val())
                 }
-                location.href = "/contact-list";
+                location.href = "contact-list.html";
             });
 
             $("button.edit").on("click", function()
             {
-                location.href = "/edit" + $(this).val();
+                location.href = "edit.html#" + $(this).val();
             });
         }
-
-        $("#addButton").on("click", ()=>
-        {
-            location.href = "/edit#add";
-        });
     }
 
     /**
@@ -315,6 +300,9 @@
         }
     }
 
+    /**
+     *  Displays login page
+     */
     function displayLoginPage()
     {
         console.log("Login Page");
@@ -348,12 +336,17 @@
                 {
                     // add user to session storage
                     sessionStorage.setItem("user", newUser.serialize());
+                    sessionStorage.setItem("name", newUser.userName());
+
+                    //console.log(newUser.userName());
 
                     // hide any error message
                     messageArea.removeAttr("class").hide();
 
                     // redirect the user to the secure area of our site - contact-list.html
                     location.href = "contact-list.html";
+
+                    
                 }
                 // else if bad credentials were entered...
                 else
@@ -371,20 +364,31 @@
             document.forms[0].reset();
 
             // return to the home page
-            location.href = "home";
+            location.href = "index.html";
         });
     }
 
-    function CheckLogin()
+    /**
+     *  Checks if user is login in
+     */
+    function checkLogin()
     {
         // if user is logged in
         if(sessionStorage.getItem("user"))
         {
+
             // swap out the login link for logout
+            if(sessionStorage.getItem("name"))
+            {
+                $("#login-user").html(
+                    `<a id="login-user" class="nav-link" href="#"><i class="fas fa-user"></i> - ${sessionStorage.getItem("name")}</a>`
+                );
+            }
+
             $("#login").html(
                 `<a id="logout" class="nav-link" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>`
             );
-            
+
             $("#logout").on("click", function()
             {
                 // perform logout
@@ -396,51 +400,121 @@
         }
     }
 
-    function displayRegisterPage()
-    {
-        console.log("Register Page");
-    }
+    /**
+     * Check if both passwords match for registration page
+     * 
+     * @param {string} fieldID1 
+     * @param {string} fieldID2 
+     * @param {string} error_message 
+     */
+    function PasswordCheck(fieldID1, fieldID2, error_message)
+    {   
+        // set's message Area
+        let messageArea = $("#messageArea").hide();
 
-    function Display404page()
-    {
+        // get's 1st password
+        $("#" + fieldID1).on("blur", function()
+        {
+            // reads password
+            let pass1 = $(this).val();
+                
+                // get's 2st password
+                $("#" + fieldID2).on("blur", function()
+                {
+                    // hides message AREA
+                    messageArea.removeAttr("class").hide();
 
+                    // reads password
+                    let pass2 = $(this).val();
+
+                    // compares 1st password to 2nd password
+                    if (pass1 != pass2)
+                    {
+                        // shows error message
+                        $(this).trigger("focus").trigger("select");
+                        messageArea.addClass("alert alert-danger").text(error_message).show();
+                    }
+                    else
+                    {
+                        // hide's message box
+                        messageArea.removeAttr("class").hide();
+                    }
+                });
+        });
+            
     }
 
     /**
-     * @param {String} activeLink 
-     * @returns {function}
+     * Registration page validation
      */
-    function ActiveLinkCallBack()
+    function ResgisterValidation()
     {
-        switch(router.ActiveLink)
-        {
-            case "home": return DisplayHomePage;
-            case "about" : return DisplayAboutPage;
-            case "products" : return DisplayProductsPage;
-            case "services" : return DisplayServicesPage;
-            case "contact" : return DisplayContactPage;
-            case "contact-list" : return DisplayContactListPage;
-            case "edit" : return displayEditPage;
-            case "login" : return displayLoginPage;
-            case "register" : return displayRegisterPage;
-            case "404" : return Display404page;;
-            default:
-                console.error("ERROR: call back does not exits: " + activeLink);
-                break;
-        }
+        ValidateField("FirstName", /^([A-Z][a-z]{1,})*$/, "Please enter a valid First Name. This must include at least a Capitalized First Letter.");
+        ValidateField("lastName", /^([A-Z][a-z]{1,})+.?(|,|-)+([A-Z][a-z]{1,})*$/, "Please enter a valid Last Name. This includes First Letter That the First Letter Be Capitalized.");
+        ValidateField("emailAddress", /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,8}$/, "Please enter a valid Email Address.");
+        ValidateField("password", /^[a-zA-Z0-9._-]{6,}$/, "Password Must Be Longer That 6 Characters");
+        PasswordCheck("password", "confirmPassword", "Password's Do Not Match.");
     }
+
+    /**
+     *  Displays registration page
+     */
+    function displayRegisterPage()
+    {
+        ResgisterValidation();
+        console.log("Register Page");
+
+        $("#submitButton").on("click", function()
+        {
+
+            $("#registerForm").on("submit", function(e)
+            {
+                e.preventDefault();
+                console.log(FirstName.value,",", lastName.value,",", emailAddress.value,",", password.value);
+                $("#registerForm")[0].reset();
+            });
+          
+        });
+    }
+
 
     // named function option
     function Start()
     {
         console.log("App Started!");
 
-        LoadHeader();
-        //AjaxRequest("GET", "./Views/compoenets/header.html", LoadHeader);
+        AjaxRequest("GET", "header.html", LoadHeader);
 
-        LoadContent();
-
-        LoadFooter();
+        switch (document.title) {
+          case "Home":
+            DisplayHomePage();
+            break;
+          case "Our Products":
+            DisplayProductsPage();
+            break;
+          case "Our Services":
+            DisplayServicesPage();
+            break;
+          case "About Us":
+            DisplayAboutPage();
+            break;
+          case "Contact Us":
+            DisplayContactPage();
+            break;
+          case "Contact-List":
+            DisplayContactListPage();
+            break;
+          //new
+          case "Edit":
+            displayEditPage();
+            break;
+          case "Login":
+            displayLoginPage();
+            break;
+          case "Register":
+            displayRegisterPage();
+            break;
+        }
        
     }
 
